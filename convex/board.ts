@@ -1,4 +1,4 @@
-import { mutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
 const images = [
@@ -37,5 +37,26 @@ export const create = mutation({
     console.log("[CREATE_BOARD] Success");
 
     return board;
+  },
+});
+
+export const get = query({
+  args: {
+    orgId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) throw new Error("Unauthorized");
+
+    const boards = await ctx.db
+      .query("boards")
+      .withIndex("by_org", (q) => q.eq("orgId", args.orgId))
+      .order("desc")
+      .collect();
+
+    console.log("[GET_BOARDS] Success");
+
+    return boards;
   },
 });

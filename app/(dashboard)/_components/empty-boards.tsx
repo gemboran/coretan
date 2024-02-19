@@ -11,18 +11,19 @@ export const EmptyBoards = () => {
   const { organization } = useOrganization();
   const { mutate, pending } = useApiMutation(api.board.create);
 
-  const onClick = () => {
+  const onClick = async () => {
     if (!organization) return;
 
-    return mutate({
-      title: "Untitled",
-      orgId: organization.id,
-    })
-      .then((id) => {
-        toast.success("Board created");
-        // TODO: Redirect to board/{id}
-      })
-      .catch(() => toast.error("Failed to create board"));
+    try {
+      const id = await mutate({
+        title: "Untitled",
+        orgId: organization.id,
+      });
+      toast.success("Board created");
+      // TODO: Redirect to /board/{id}
+    } catch {
+      toast.error("Failed to create board");
+    }
   };
 
   return (
