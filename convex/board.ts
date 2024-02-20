@@ -53,9 +53,21 @@ export const get = query({
       .order("desc")
       .collect();
 
+    const boardsWithFavorite = Promise.all(
+      boards.map((board) =>
+        ctx.db
+          .query("userFavorites")
+          .withIndex("by_user_board", (q) =>
+            q.eq("userId", identity.subject).eq("boardId", board._id),
+          )
+          .unique()
+          .then((favorite) => ({ ...board, isFavorite: !!favorite })),
+      ),
+    );
+
     console.log("[GET_BOARDS] Success");
 
-    return boards;
+    return boardsWithFavorite;
   },
 });
 
@@ -91,6 +103,38 @@ export const update = mutation({
     });
 
     console.log("[UPDATE_BOARD] Success");
+
+    return board;
+  },
+});
+
+export const favorite = mutation({
+  args: { id: v.id("boards"), orgId: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error("Unauthorized");
+
+    const board = await ctx.db.get(args.id);
+    if (!board) throw new Error("Board not found");
+
+    const existingFavorite = await ctx.db
+      .query("userFavorites")
+      .withIndex("by_user_board_org", (q) =>
+        q
+          .eq("userId", identity.subject)
+          .eq("boardId", board._id)
+          .eq("orgId", args.orgId),
+      )
+      .unique();
+    if (existingFavorite) {
+      await ctx.db.delete(existingFavorite._id);
+    } else {
+      await ctx.db.insert("userFavorites", {
+        userId: identity.subject,
+        boardId: board._id,
+        orgId: args.orgId,
+      });
+    }
 
     return board;
   },
