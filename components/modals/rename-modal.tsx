@@ -42,7 +42,7 @@ export const RenameModal = () => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="rounded-lg">
         <DialogHeader>
           <DialogTitle>Edit board title</DialogTitle>
           <DialogDescription>

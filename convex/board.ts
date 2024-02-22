@@ -181,3 +181,14 @@ export const favorite = mutation({
     return board;
   },
 });
+
+export const getOne = query({
+  args: { id: v.id("boards") },
+  handler: async (ctx, { id }) => {
+    const board = await ctx.db.get(id);
+
+    console.log("[GET_BOARD] Success");
+
+    return board;
+  },
+});
